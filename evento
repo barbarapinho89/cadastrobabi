@@ -1,0 +1,121 @@
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+public class Evento {
+    private final String id;
+    private final String nome;
+    private final String endereco;
+    private final CategoriaEvento categoria;
+    private final LocalDateTime dataHora;
+    private final int duracaoMin;
+    private final String descricao;
+    private final List<String> participantes = new ArrayList<>();
+
+    private static final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    public Evento(String id, String nome, String endereco, CategoriaEvento categoria,
+                  LocalDateTime dataHora, int duracaoMin, String descricao) {
+
+        if (duracaoMin <= 0) {
+            throw new IllegalArgumentException("Duração deve ser maior que zero.");
+        }
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("Nome não pode ser vazio.");
+        }
+
+        this.id = id;
+        this.nome = nome;
+        this.endereco = endereco;
+        this.categoria = categoria;
+        this.dataHora = dataHora;
+        this.duracaoMin = duracaoMin;
+        this.descricao = descricao;
+    }
+
+    public String getId() { return id; }
+    public String getNome() { return nome; }
+    public LocalDateTime getDataHora() { return dataHora; }
+    public int getDuracao() { return duracaoMin; }
+    public String getDescricao() { return descricao; }
+
+    public List<String> getParticipantes() {
+        return Collections.unmodifiableList(participantes);
+    }
+
+    public void adicionarParticipante(String nome) {
+        participantes.add(nome);
+    }
+
+    public void removerParticipante(String nome) {
+        participantes.remove(nome);
+    }
+
+    public boolean acontecendoAgora() {
+        LocalDateTime agora = LocalDateTime.now();
+        return !agora.isBefore(dataHora) && agora.isBefore(dataHora.plusMinutes(duracaoMin));
+    }
+
+    public boolean jaPassou() {
+        return LocalDateTime.now().isAfter(dataHora.plusMinutes(duracaoMin));
+    }
+
+    // Salva como linha de texto (para arquivo)
+    public String salvarLinha() {
+        return String.join("|",
+            id,
+            nome,
+            endereco,
+            categoria.toString(),
+            dataHora.format(fmt),
+            String.valueOf(duracaoMin),
+            descricao,
+            String.join(",", participantes)
+        );
+    }
+
+    // Lê evento a partir de uma linha salva
+    public static Evento lerLinha(String linha) {
+        try {
+            String[] p = linha.split("\\|");
+            Evento e = new Evento(
+                p[0],
+                p[1],
+                p[2],
+                CategoriaEvento.pegar(p[3]),
+                LocalDateTime.parse(p[4], fmt),
+                Integer.parseInt(p[5]),
+                p[6]
+            );
+            if (p.length > 7 && !p[7].isEmpty()) {
+                e.participantes.addAll(Arrays.asList(p[7].split(",")));
+            }
+            return e;
+        } catch (Exception ex) {
+            System.out.println("Erro lendo evento: " + linha);
+            return null;
+        }
+    }
+
+    @Override
+    public String toString() {
+        String status = acontecendoAgora() ? " (OCORRENDO)" : (jaPassou() ? " (PASSOU)" : "");
+        return String.format(
+            "%s - %s [%s] em %s no %s, duração %d min, %d participantes%s",
+            id, nome, categoria, dataHora.format(fmt), endereco, duracaoMin, participantes.size(), status
+        );
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Evento)) return false;
+        Evento e = (Evento) o;
+        return Objects.equals(id, e.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+}
