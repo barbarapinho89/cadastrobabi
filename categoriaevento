@@ -1,0 +1,30 @@
+public enum CategoriaEvento {
+    FEIRA_EMPREGOS("Feira de Empregos"),
+    HACKATHON("Hackathon"),
+    MEETUP("Meetup Profissional"),
+    MENTORIA("Sessão de Mentoria"),
+    WORKSHOP("Workshop"),
+    NETWORKING("Networking Geral"),
+    CONFERENCIA("Conferência");
+
+    private final String descricao;
+
+    CategoriaEvento(String descricao) {
+        this.descricao = descricao;
+    }
+
+    @Override
+    public String toString() {
+        return descricao;
+    }
+
+    // Método auxiliar para converter texto em CategoriaEvento
+    public static CategoriaEvento pegar(String texto) {
+        for (CategoriaEvento c : values()) {
+            if (c.name().equalsIgnoreCase(texto) || c.descricao.equalsIgnoreCase(texto)) {
+                return c;
+            }
+        }
+        throw new IllegalArgumentException("Categoria inválida: " + texto);
+    }
+}
